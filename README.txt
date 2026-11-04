@@ -26,8 +26,7 @@ This project is about the R Simulator; Linear Regression to be precise, refer to
   - Slope `b = Σ(X − X̄)(Y − Ȳ) / Σ(X − X̄)²`
   - Intercept `a = Ȳ − bX̄`
   - Regression equation and Predicted Y
-  - Correlation `r` and `R²`
-- **Summary page:** equation, a, b, r, R², standard error, the completed table with totals, the Predicted Y graph (scatter plot with regression line) and a residual plot.
+- **Summary page:** equation, a, b, number of observations, the completed table with totals, and the Predicted Y graph (scatter plot with regression line).
 - **Interactive graph:** hover over any Actual Y or Predicted Y point to see its row, X, Y, predicted value, the substitution `a + b(X)` and the residual.
 - Changing any X/Y value after calculating closes the Solution and Summary pages, so results are never out of date. Press **Calculate** again to refresh them.
 
@@ -77,4 +76,5 @@ Expected results: X̄ = 3, Ȳ = 4.2, b = 0.8, a = 1.8, so **Ŷ = 1.8 + 0.8X** (R
 | File | Description |
 |---|---|
 | `app.R` | The complete Shiny application (calculations, UI and graphs) |
-| `README.md` | This file |
+| `archived_summary_elements.R` | Archived Summary metrics, residual plot, and strength-of-fit solution step; not loaded by the app |
+| `README.txt` | This file |

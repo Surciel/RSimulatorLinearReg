@@ -171,6 +171,9 @@ table.entry input[type=number] { -moz-appearance: textfield; }
 .frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 4px; }
 .frac .num { display: block; border-bottom: 1px solid var(--ink); padding: 0 4px; }
 .frac .den { display: block; padding: 0 4px; }
+.means-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.means-grid .formula { margin-top: 4px; }
+@media (max-width: 600px) { .means-grid { grid-template-columns: 1fr; } }
 
 table.calc { border-collapse: collapse; margin: 8px 0; min-width: 60%%; background: var(--card); }
 table.calc th { background: var(--head); border: 1px solid var(--ink); padding: 5px 12px; text-align: center; }
@@ -245,9 +248,6 @@ app_ui <- tabsetPanel(
                        hover = hoverOpts("fit_hover", delay = 40, delayType = "throttle",
                                          nullOutside = TRUE)),
             uiOutput("fit_tip"))),
-    div(class = "panel-card",
-        h4("Residual Plot"),
-        plotOutput("resid_plot", height = "300px")),
     div(class = "btn-row",
         actionButton("edit_rows", "Edit X/Y Rows", class = "btn-soft"),
         actionButton("new_entry", "Enter New Entry", class = "btn-soft"))
@@ -365,48 +365,53 @@ server <- function(input, output, session) {
   output$solution_ui <- renderUI({
     R <- req(result())
     n <- R$n
-    idx <- seq_len(n)
     xs <- paste(fmt(R$x), collapse = " + ")
     ys <- paste(fmt(R$y), collapse = " + ")
 
     tagList(
       step_card(1, "Compute the means",
-        div(class = "formula", paste0(XB, " = ", SIG, "X / n"), HTML("&nbsp;&nbsp;&nbsp;"),
-            paste0(YB, " = ", SIG, "Y / n")),
-        div(class = "subst", paste0(XB, " = (", xs, ") / ", n, " = ", fmt(R$Sx), " / ", n, " = ", fmt(R$xbar))),
-        div(class = "subst", paste0(YB, " = (", ys, ") / ", n, " = ", fmt(R$Sy), " / ", n, " = ", fmt(R$ybar))),
+        div(class = "means-grid",
+          div(
+            div(class = "formula", paste0(XB, " = ", SIG, "X / n")),
+            div(class = "subst", paste0(XB, " = (", xs, ") / ", n)),
+            div(class = "subst", style = "padding-left:1.5em;",
+                paste0("= ", fmt(R$Sx), " / ", n, " = ", fmt(R$xbar)))
+          ),
+          div(
+            div(class = "formula", paste0(YB, " = ", SIG, "Y / n")),
+            div(class = "subst", paste0(YB, " = (", ys, ") / ", n)),
+            div(class = "subst", style = "padding-left:1.5em;",
+                paste0("= ", fmt(R$Sy), " / ", n, " = ", fmt(R$ybar)))
+          )
+        ),
         answer = paste0(XB, " = ", fmt(R$xbar), "     ", YB, " = ", fmt(R$ybar))),
 
-      step_card(2, paste0("Column  ", H_DX),
-        div(class = "formula", paste0(H_DX)),
-        html_table(setNames(data.frame(idx, fmt(R$x), paste0(fmt(R$x), " − ", paren(R$xbar)), fmt(R$dx),
+      step_card(2, H_DX,
+        html_table(setNames(data.frame(fmt(R$x), paste0(fmt(R$x), " − ", paren(R$xbar)), fmt(R$dx),
                                        stringsAsFactors = FALSE),
-                            c("Row", "X", "Substitution", H_DX)),
-                   total = c("", "", paste0(SIG, " (check)"), fmt(sum(R$dx)))),
+                            c("X", "Substitution", H_DX)),
+                   total = c("", SIG, fmt(sum(R$dx)))),
         answer = paste0(H_DX, " = ", paste(fmt(R$dx), collapse = ",  "))),
 
-      step_card(3, paste0("Column  ", H_DY),
-        div(class = "formula", paste0(H_DY)),
-        html_table(setNames(data.frame(idx, fmt(R$y), paste0(fmt(R$y), " − ", paren(R$ybar)), fmt(R$dy),
+      step_card(3, H_DY,
+        html_table(setNames(data.frame(fmt(R$y), paste0(fmt(R$y), " − ", paren(R$ybar)), fmt(R$dy),
                                        stringsAsFactors = FALSE),
-                            c("Row", "Y", "Substitution", H_DY)),
-                   total = c("", "", paste0(SIG, " (check)"), fmt(sum(R$dy)))),
+                            c("Y", "Substitution", H_DY)),
+                   total = c("", SIG, fmt(sum(R$dy)))),
         answer = paste0(H_DY, " = ", paste(fmt(R$dy), collapse = ",  "))),
 
-      step_card(4, paste0("Column  ", H_DXDY),
-        div(class = "formula", H_DXDY),
-        html_table(setNames(data.frame(idx, paste0(paren(R$dx), " × ", paren(R$dy)), fmt(R$dxdy),
+      step_card(4, H_DXDY,
+        html_table(setNames(data.frame(paste0("(", fmt(R$dx), ") (", fmt(R$dy), ")"), fmt(R$dxdy),
                                        stringsAsFactors = FALSE),
-                            c("Row", "Substitution", H_DXDY)),
-                   total = c("", paste0(SIG, H_DXDY), fmt(R$Sxy))),
+                            c("Substitution", H_DXDY)),
+                   total = c(paste0(SIG, H_DXDY), fmt(R$Sxy))),
         answer = paste0(SIG, H_DXDY, " = ", fmt(R$Sxy))),
 
-      step_card(5, paste0("Column  ", H_DX2),
-        div(class = "formula", H_DX2),
-        html_table(setNames(data.frame(idx, paste0(paren(R$dx), "²"), fmt(R$dx2),
+      step_card(5, H_DX2,
+        html_table(setNames(data.frame(paste0(paren(R$dx), "²"), fmt(R$dx2),
                                        stringsAsFactors = FALSE),
-                            c("Row", "Substitution", H_DX2)),
-                   total = c("", paste0(SIG, H_DX2), fmt(R$Sxx))),
+                            c("Substitution", H_DX2)),
+                   total = c(paste0(SIG, H_DX2), fmt(R$Sxx))),
         answer = paste0(SIG, H_DX2, " = ", fmt(R$Sxx))),
 
       step_card(6, "Slope (b)",
@@ -422,26 +427,17 @@ server <- function(input, output, session) {
         answer = paste0("a = ", fmt(R$a))),
 
       step_card(8, "Regression equation",
-        div(class = "formula", paste0("Y = a + bX")),
-        div(class = "subst", paste0("Y = ", fmt(R$a), " + ", paren(R$b), "X")),
+        div(class = "formula", paste0(YH, " = a + bX")),
+        div(class = "subst", paste0(YH, " = ", fmt(R$a), " + ", paren(R$b), "X")),
         answer = paste0(YH, " = ", fmt(R$a), if (R$b < 0) " − " else " + ", fmt(abs(R$b)), "X")),
 
-      step_card(9, paste0("Column  ", H_PRED),
+      step_card(9, H_PRED,
         div(class = "formula", paste0(YH, " = a + bX")),
-        html_table(setNames(data.frame(idx, fmt(R$x),
+        html_table(setNames(data.frame(fmt(R$x),
                                        paste0(fmt(R$a), " + ", paren(R$b), "(", fmt(R$x), ")"), fmt(R$yhat),
                                        stringsAsFactors = FALSE),
-                            c("Row", "X", "Substitution", H_PRED))),
-        answer = paste0(H_PRED, " = ", paste(fmt(R$yhat), collapse = ",  "))),
-
-      step_card(10, "Strength of the fit (r and R²)",
-        div(class = "formula", "r = ",
-            frac(paste0(SIG, H_DXDY), paste0("√[ ", SIG, H_DX2, " · ", SIG, "(Y − ", YB, ")² ]"))),
-        div(class = "subst", paste0(SIG, "(Y − ", YB, ")² = ", fmt(R$Syy))),
-        div(class = "subst", "r = ", frac(fmt(R$Sxy), paste0("√(", fmt(R$Sxx), " × ", fmt(R$Syy), ")")),
-            paste0(" = ", fmt(R$r))),
-        div(class = "subst", paste0("R² = r² = ", fmt(R$r2))),
-        answer = paste0("r = ", fmt(R$r), "     R² = ", fmt(R$r2)))
+                            c("X", "Substitution", H_PRED))),
+        answer = paste0(H_PRED, " = ", paste(fmt(R$yhat), collapse = ",  ")))
     )
   })
 
@@ -452,19 +448,16 @@ server <- function(input, output, session) {
     eq <- paste0(YH, " = ", fmt(R$a), if (R$b < 0) " − " else " + ", fmt(abs(R$b)), "X")
 
     tbl <- data.frame(fmt(R$x), fmt(R$y), fmt(R$dx), fmt(R$dy), fmt(R$dxdy), fmt(R$dx2),
-                      fmt(R$yhat), fmt(R$res), stringsAsFactors = FALSE)
-    names(tbl) <- c("X", "Y", H_DX, H_DY, H_DXDY, H_DX2, H_PRED, "Residual (Y − Ŷ)")
+                      fmt(R$yhat), stringsAsFactors = FALSE)
+    names(tbl) <- c("X", "Y", H_DX, H_DY, H_DXDY, H_DX2, H_PRED)
     totals <- c(fmt(R$Sx), fmt(R$Sy), fmt(sum(R$dx)), fmt(sum(R$dy)), fmt(R$Sxy), fmt(R$Sxx),
-                fmt(sum(R$yhat)), fmt(sum(R$res)))
+                fmt(sum(R$yhat)))
 
     tagList(
       div(class = "stat-grid",
           stat("Regression equation", eq, "wide"),
           stat("Intercept (a)", fmt(R$a)),
           stat("Slope (b)", fmt(R$b)),
-          stat("Correlation (r)", fmt(R$r)),
-          stat("R²", fmt(R$r2)),
-          stat("Std. error of estimate", fmt(R$se)),
           stat("Observations (n)", R$n)),
       div(class = "panel-card",
           h4("Completed table"),
@@ -556,8 +549,8 @@ server <- function(input, output, session) {
       scale_y_continuous(breaks = ay$breaks) +
       coord_cartesian(xlim = ax$lim, ylim = ay$lim, expand = FALSE) +
       labs(title = "Scatter Plot with Regression Line",
-           subtitle = sprintf("Y = %s %s %sX   (R² = %s)", fmt(R$a),
-                              if (R$b < 0) "-" else "+", fmt(abs(R$b)), fmt(R$r2)),
+           subtitle = sprintf("Y = %s %s %sX", fmt(R$a),
+                              if (R$b < 0) "-" else "+", fmt(abs(R$b))),
            x = "X", y = "Y") +
       plot_theme() +
       theme(aspect.ratio = 1,                                           # square plane
@@ -571,16 +564,6 @@ server <- function(input, output, session) {
             axis.title       = element_text(face = "bold", size = 14))
   })
 
-  output$resid_plot <- renderPlot({
-    R <- req(result())
-    df <- data.frame(x = R$x, res = R$res)
-    ggplot(df, aes(x, res)) +
-      geom_hline(yintercept = 0, colour = PAL$accent, linewidth = 1) +
-      geom_segment(aes(xend = x, yend = 0), colour = "grey55", linetype = "dashed") +
-      geom_point(colour = PAL$pred, size = 3.5) +
-      labs(title = "Residuals (Actual Y - Predicted Y)", x = "X", y = "Residual") +
-      plot_theme()
-  })
 }
 
 shinyApp(ui, server)
