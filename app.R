@@ -82,6 +82,34 @@ fmt <- function(v, d = 4) {
                 formatC(v, format = "f", digits = d, drop0trailing = TRUE))
   sub("^-", "−", out)                   # proper minus sign
 }
+graph_interpretation <- function(R) {
+  slope <- round(R$b, 4)
+  if (slope > 0) {
+    list(
+      classification = "Positive correlation",
+      explanation = paste0(
+        "As X increases, Y also tends to increase, as shown by the upward-sloping regression line (Y = ",
+        fmt(R$a), " + ", fmt(R$b), "X)."
+      )
+    )
+  } else if (slope < 0) {
+    list(
+      classification = "Negative correlation",
+      explanation = paste0(
+        "As X increases, Y tends to decrease, as shown by the downward-sloping regression line (Y = ",
+        fmt(R$a), " - ", fmt(abs(R$b)), "X)."
+      )
+    )
+  } else {
+    list(
+      classification = "No correlation",
+      explanation = paste0(
+        "As X increases, Y shows no consistent pattern or trend, as shown by the flat/horizontal regression line (Y = ",
+        fmt(R$a), " + 0X)."
+      )
+    )
+  }
+}
 paren <- function(v) ifelse(v < 0, paste0("(", fmt(v), ")"), fmt(v))
 num1  <- function(v) if (is.null(v) || length(v) == 0 || is.na(v)) NA_real_ else as.numeric(v)
 
@@ -122,11 +150,13 @@ body { background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Helvet
 .container-fluid { max-width: 1040px; padding: 0 16px 48px; }
 
 /* ---------- landing ---------- */
-.landing { text-align: center; padding: 90px 20px; }
-.landing h1 { font-weight: 800; font-size: 44px; margin: 0; }
-.landing h2 { font-weight: 400; font-size: 28px; margin: 6px 0 36px; }
-.landing .group { font-size: 20px; margin-bottom: 8px; }
-.landing .members { font-size: 15px; line-height: 1.7; margin-bottom: 48px; }
+.landing { display: flex; flex-direction: column; align-items: center; text-align: center;
+  min-height: calc(100vh - 48px); padding: 8vh 20px 5vh; }
+.landing h1 { font-weight: 800; font-size: 56px; margin: 0; }
+.landing h2 { font-weight: 400; font-size: 36px; margin: 8px 0 48px; }
+.landing .group { font-size: 26px; margin-bottom: 12px; }
+.landing .members { font-size: 20px; line-height: 1.8; margin-bottom: 48px; }
+.landing .btn-main { margin-top: auto; padding: 14px 44px; font-size: 21px; }
 
 /* ---------- buttons ---------- */
 .btn-main { background: var(--bar); color: var(--ink); border: 2px solid var(--ink);
@@ -139,7 +169,8 @@ body { background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Helvet
 .btn-row .btn { margin: 4px 8px; }
 
 /* ---------- top bar (tabs) ---------- */
-.nav-pills { background: var(--bar); margin: 0 -16px 22px; padding: 10px 16px; border-bottom: 1px solid var(--ink); }
+.nav-pills { background: var(--bar); margin: 0 -16px 22px; padding: 10px 16px;
+  border: 1px solid var(--ink); }
 .nav-pills > li > a { background: var(--bg); color: var(--ink); border: 2px solid var(--ink);
   border-radius: 999px; font-weight: 700; padding: 5px 18px; margin-right: 10px; }
 .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus
@@ -173,6 +204,8 @@ table.entry input[type=number] { -moz-appearance: textfield; }
 .frac .den { display: block; padding: 0 4px; }
 .means-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .means-grid .formula { margin-top: 4px; }
+.mean-equation { display: grid; grid-template-columns: max-content 1.25em minmax(0, 1fr); align-items: baseline; row-gap: 4px; }
+.mean-equation .mean-answer { font-size: 19px; font-weight: 700; }
 @media (max-width: 600px) { .means-grid { grid-template-columns: 1fr; } }
 
 table.calc { border-collapse: collapse; margin: 8px 0; min-width: 60%%; background: var(--card); }
@@ -181,7 +214,7 @@ table.calc td { border: 1px solid var(--ink); padding: 4px 12px; text-align: cen
 table.calc tfoot td { background: var(--muted); font-weight: 700; }
 table.calc td:last-child, table.calc th:last-child { font-weight: 700; }
 table.sum-table { width: 100%%; }
-table.sum-table td:last-child, table.sum-table th:last-child { font-weight: inherit; }
+table.sum-table td:last-child, table.sum-table th:last-child { font-weight: 700; }
 
 /* ---------- summary ---------- */
 .stat-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
@@ -191,6 +224,9 @@ table.sum-table td:last-child, table.sum-table th:last-child { font-weight: inhe
 .stat.wide { flex: 2 1 280px; background: var(--bar); }
 .panel-card { background: var(--card); border: 1px solid var(--ink); border-radius: 10px; padding: 14px; margin-bottom: 18px; }
 .panel-card h4 { margin: 0 0 8px; font-weight: 700; }
+.interpretation-body { padding: 10px 12px; border: 1px solid var(--ink); border-radius: 8px; }
+.interpretation-classification { font-size: 18px; font-weight: 700; }
+.interpretation-explanation { margin-top: 6px; }
 .table-wrap { overflow-x: auto; }
 .plot-tip { position: absolute; z-index: 100; pointer-events: none; white-space: nowrap;
   background: rgba(255,255,255,.97); border: 2px solid var(--ink); border-radius: 8px;
@@ -248,6 +284,7 @@ app_ui <- tabsetPanel(
                        hover = hoverOpts("fit_hover", delay = 40, delayType = "throttle",
                                          nullOutside = TRUE)),
             uiOutput("fit_tip"))),
+    div(class = "panel-card", uiOutput("fit_interpretation")),
     div(class = "btn-row",
         actionButton("edit_rows", "Edit X/Y Rows", class = "btn-soft"),
         actionButton("new_entry", "Enter New Entry", class = "btn-soft"))
@@ -338,7 +375,7 @@ server <- function(input, output, session) {
     }
     result(calc_regression(d$x, d$y))
     show_results(TRUE)
-    updateTabsetPanel(session, "tabs", selected = "solution")
+    updateTabsetPanel(session, "tabs", selected = "summary")
   })
 
   observeEvent(input$to_summary, updateTabsetPanel(session, "tabs", selected = "summary"))
@@ -371,20 +408,19 @@ server <- function(input, output, session) {
     tagList(
       step_card(1, "Compute the means",
         div(class = "means-grid",
-          div(
-            div(class = "formula", paste0(XB, " = ", SIG, "X / n")),
-            div(class = "subst", paste0(XB, " = (", xs, ") / ", n)),
-            div(class = "subst", style = "padding-left:1.5em;",
-                paste0("= ", fmt(R$Sx), " / ", n, " = ", fmt(R$xbar)))
+          div(class = "mean-equation",
+            span(XB), span("="), span(class = "formula", paste0(SIG, "X / n")),
+            span(XB), span("="), span(class = "subst", paste0("(", xs, ") / ", n)),
+            span(), span("="), span(class = "subst", paste0(fmt(R$Sx), " / ", n)),
+            span(), span("="), span(class = "subst mean-answer", fmt(R$xbar))
           ),
-          div(
-            div(class = "formula", paste0(YB, " = ", SIG, "Y / n")),
-            div(class = "subst", paste0(YB, " = (", ys, ") / ", n)),
-            div(class = "subst", style = "padding-left:1.5em;",
-                paste0("= ", fmt(R$Sy), " / ", n, " = ", fmt(R$ybar)))
+          div(class = "mean-equation",
+            span(YB), span("="), span(class = "formula", paste0(SIG, "Y / n")),
+            span(YB), span("="), span(class = "subst", paste0("(", ys, ") / ", n)),
+            span(), span("="), span(class = "subst", paste0(fmt(R$Sy), " / ", n)),
+            span(), span("="), span(class = "subst mean-answer", fmt(R$ybar))
           )
-        ),
-        answer = paste0(XB, " = ", fmt(R$xbar), "     ", YB, " = ", fmt(R$ybar))),
+        )),
 
       step_card(2, H_DX,
         html_table(setNames(data.frame(fmt(R$x), paste0(fmt(R$x), " − ", paren(R$xbar)), fmt(R$dx),
@@ -415,29 +451,35 @@ server <- function(input, output, session) {
         answer = paste0(SIG, H_DX2, " = ", fmt(R$Sxx))),
 
       step_card(6, "Slope (b)",
-        div(class = "formula", "b = ",
-            frac(paste0(SIG, H_DXDY), paste0(SIG, H_DX2))),
-        div(class = "subst", "b = ", frac(fmt(R$Sxy), fmt(R$Sxx)), paste0(" = ", fmt(R$b))),
-        answer = paste0("b = ", fmt(R$b))),
+        div(class = "mean-equation",
+          span("b"), span("="), span(class = "formula", frac(paste0(SIG, H_DXDY), paste0(SIG, H_DX2))),
+          span("b"), span("="), span(class = "subst", frac(fmt(R$Sxy), fmt(R$Sxx))),
+          span(), span("="), span(class = "subst mean-answer", fmt(R$b))
+        )),
 
       step_card(7, "Intercept (a)",
-        div(class = "formula", paste0("a = ", YB, " − b", XB)),
-        div(class = "subst", paste0("a = ", fmt(R$ybar), " − ", paren(R$b), "(", fmt(R$xbar), ")")),
-        div(class = "subst", paste0("a = ", fmt(R$ybar), " − ", paren(R$b * R$xbar))),
-        answer = paste0("a = ", fmt(R$a))),
+        div(class = "mean-equation",
+          span("a"), span("="), span(class = "formula", paste0(YB, " − b", XB)),
+          span(), span("="), span(class = "subst", paste0(fmt(R$ybar), " − ", paren(R$b), "(", fmt(R$xbar), ")")),
+          span(), span("="), span(class = "subst", paste0(fmt(R$ybar), " − ", paren(R$b * R$xbar))),
+          span(), span("="), span(class = "subst mean-answer", fmt(R$a))
+        )),
 
       step_card(8, "Regression equation",
-        div(class = "formula", paste0(YH, " = a + bX")),
-        div(class = "subst", paste0(YH, " = ", fmt(R$a), " + ", paren(R$b), "X")),
-        answer = paste0(YH, " = ", fmt(R$a), if (R$b < 0) " − " else " + ", fmt(abs(R$b)), "X")),
+        div(class = "mean-equation",
+          span(YH), span("="), span(class = "formula", "a + bX"),
+          span(YH), span("="), span(class = "subst mean-answer",
+                                    paste0(fmt(R$a), if (R$b < 0) " − " else " + ", fmt(abs(R$b)), "X"))
+        )),
 
       step_card(9, H_PRED,
         div(class = "formula", paste0(YH, " = a + bX")),
+        div(class = "subst", paste0("a = ", fmt(R$a), ", b = ", fmt(R$b))),
         html_table(setNames(data.frame(fmt(R$x),
                                        paste0(fmt(R$a), " + ", paren(R$b), "(", fmt(R$x), ")"), fmt(R$yhat),
                                        stringsAsFactors = FALSE),
                             c("X", "Substitution", H_PRED))),
-        answer = paste0(H_PRED, " = ", paste(fmt(R$yhat), collapse = ",  ")))
+        answer = paste0(YH, " = ", paste(fmt(R$yhat), collapse = ",  ")))
     )
   })
 
@@ -452,6 +494,7 @@ server <- function(input, output, session) {
     names(tbl) <- c("X", "Y", H_DX, H_DY, H_DXDY, H_DX2, H_PRED)
     totals <- c(fmt(R$Sx), fmt(R$Sy), fmt(sum(R$dx)), fmt(sum(R$dy)), fmt(R$Sxy), fmt(R$Sxx),
                 fmt(sum(R$yhat)))
+    total_row <- paste0(SIG, " = ", totals)
 
     tagList(
       div(class = "stat-grid",
@@ -461,7 +504,7 @@ server <- function(input, output, session) {
           stat("Observations (n)", R$n)),
       div(class = "panel-card",
           h4("Completed table"),
-          div(class = "table-wrap", html_table(tbl, total = paste0(SIG, " = ", totals),
+          div(class = "table-wrap", html_table(tbl, total = total_row,
                                                cls = "calc sum-table")))
     )
   })
@@ -504,16 +547,14 @@ server <- function(input, output, session) {
         div(class = "tip-title tip-actual", paste0("● Actual Y  (row ", i, ")")),
         div(paste0("X = ", fmt(R$x[i]))),
         div(paste0("Y = ", fmt(R$y[i]))),
-        div(paste0("Predicted ", YH, " = ", fmt(R$yhat[i]))),
-        div(paste0("Residual = ", fmt(R$res[i])))
+        div(paste0("Predicted ", YH, " = ", fmt(R$yhat[i])))
       )
     } else {
       body <- tagList(
         div(class = "tip-title tip-pred", paste0("▲ Predicted Y  (row ", i, ")")),
         div(paste0("X = ", fmt(R$x[i]))),
         div(paste0(YH, " = ", fmt(R$a), " + ", paren(R$b), "(", fmt(R$x[i]), ") = ", fmt(R$yhat[i]))),
-        div(paste0("Actual Y = ", fmt(R$y[i]))),
-        div(paste0("Residual = ", fmt(R$res[i])))
+        div(paste0("Actual Y = ", fmt(R$y[i])))
       )
     }
     div(class = "plot-tip", style = pos, body)
@@ -562,6 +603,20 @@ server <- function(input, output, session) {
             axis.ticks.length = unit(5, "pt"),
             axis.text        = element_text(colour = PAL$ink, size = 13),
             axis.title       = element_text(face = "bold", size = 14))
+  })
+
+  output$fit_interpretation <- renderUI({
+    R <- req(result())
+    interpretation <- graph_interpretation(R)
+    tagList(
+      h4("Interpretation of the Graph"),
+      div(class = "interpretation-body",
+        div(class = "interpretation-classification", interpretation$classification)
+      ),
+      div(class = "interpretation-body interpretation-explanation",
+        interpretation$explanation
+      )
+    )
   })
 
 }

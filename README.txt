@@ -25,9 +25,9 @@ This project is about the R Simulator; Linear Regression to be precise, refer to
   - X − X̄, Y − Ȳ, (X − X̄)(Y − Ȳ), (X − X̄)²
   - Slope `b = Σ(X − X̄)(Y − Ȳ) / Σ(X − X̄)²`
   - Intercept `a = Ȳ − bX̄`
-  - Regression equation and Predicted Y
-- **Summary page:** equation, a, b, number of observations, the completed table with totals, and the Predicted Y graph (scatter plot with regression line).
-- **Interactive graph:** hover over any Actual Y or Predicted Y point to see its row, X, Y, predicted value, the substitution `a + b(X)` and the residual.
+  - Regression equation and Predicted Y, with the values of a and b shown
+- **Summary page:** equation, a, b, number of observations, the completed table with totals, and the Predicted Y graph (scatter plot with regression line) followed by a rounded interpretation card with the correlation classification and its slope-based explanation.
+- **Interactive graph:** hover over any Actual Y or Predicted Y point to see its row, X, Y, and predicted value, including the substitution `a + b(X)`.
 - Changing any X/Y value after calculating closes the Solution and Summary pages, so results are never out of date. Press **Calculate** again to refresh them.
 
 ## Requirements to Run
