@@ -68,7 +68,9 @@ check_data <- function(d) {
     return("Please enter at least 2 complete rows of X and Y values.")
   if (any(is.na(d$x) | is.na(d$y)))
     return("Every row needs both an X and a Y value. Fill in or remove incomplete rows.")
-  if (sum((d$x - mean(d$x))^2) < 1e-12)
+  if (any(!is.finite(d$x) | !is.finite(d$y)))
+    return("X and Y values must be finite numbers.")
+  if (length(unique(d$x)) < 2)
     return("All X values are identical, so the slope cannot be computed. Use at least two different X values.")
   NULL
 }
@@ -259,8 +261,7 @@ app_ui <- tabsetPanel(
     uiOutput("entry_table"),
     div(class = "btn-row",
         actionButton("add_row", "Add Row", class = "btn-soft"),
-        actionButton("remove_row", "Remove Last Row", class = "btn-soft"),
-        actionButton("load_sample", "Load Class Sample", class = "btn-soft")),
+        actionButton("remove_row", "Remove Last Row", class = "btn-soft")),
     div(class = "btn-row", actionButton("calculate", "Calculate", class = "btn-main"))
   ),
 
@@ -300,7 +301,6 @@ ui <- fluidPage(
 # -----------------------------------------------------------------------------
 # 6. Server
 # -----------------------------------------------------------------------------
-sample_data <- data.frame(x = c(1, 2, 3, 4, 5), y = c(2, 4, 5, 4, 6))
 blank_rows  <- function(n = 4) data.frame(x = rep(NA_real_, n), y = rep(NA_real_, n))
 
 server <- function(input, output, session) {
@@ -352,8 +352,6 @@ server <- function(input, output, session) {
       showNotification("At least 2 rows are needed.", type = "warning")
     } else rows(d[-nrow(d), , drop = FALSE])
   })
-  observeEvent(input$load_sample, rows(sample_data))
-
   # If the user changes any X/Y value after calculating, the old Solution/Summary
   # would be out of date, so those pages close and Calculate must be pressed again.
   current_values <- reactive(read_inputs())

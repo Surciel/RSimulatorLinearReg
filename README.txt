@@ -19,7 +19,7 @@ This project is about the R Simulator; Linear Regression to be precise, refer to
 ## Features
 
 - **Simple linear regression** (one independent variable) using the class method: `Y = a + bX`
-- **Data Entry page:** the user types only the X and Y values. Rows can be added or removed, and a class sample dataset can be loaded.
+- **Data Entry page:** the user types only the X and Y values. Rows can be added or removed. Calculate checks that at least two complete rows are entered, each row has both values, all values are finite numbers, and X values are not all identical.
 - **Solution page:** a step-by-step solution showing every formula, substitution and final answer, labeled by the column it belongs to:
   - Means (X̄, Ȳ)
   - X − X̄, Y − Ȳ, (X − X̄)(Y − Ȳ), (X − X̄)²
@@ -59,22 +59,9 @@ If symbols such as X̄, Ŷ or Σ look garbled, reopen the file as UTF-8 (RStudio
 3. Read the working on **Solution**, then click **View Summary**.
 4. On **Summary**, scroll down for the graphs. Use **Edit X/Y Rows** to go back and change values, or **Enter New Entry** to clear everything and start over.
 
-## Sample Data (from class)
-
-| X | Y |
-|---|---|
-| 1 | 2 |
-| 2 | 4 |
-| 3 | 5 |
-| 4 | 4 |
-| 5 | 6 |
-
-Expected results: X̄ = 3, Ȳ = 4.2, b = 0.8, a = 1.8, so **Ŷ = 1.8 + 0.8X** (R² ≈ 0.7273).
-
 ## Files
 
 | File | Description |
 |---|---|
 | `app.R` | The complete Shiny application (calculations, UI and graphs) |
-| `archived_summary_elements.R` | Archived Summary metrics, residual plot, and strength-of-fit solution step; not loaded by the app |
 | `README.txt` | This file |
